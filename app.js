@@ -118,7 +118,10 @@ const espacoImages = [
   { src: 'espaco3.jpg', alt: 'Sala de massagem com marquesa' },
   { src: 'espaco4.jpg', alt: 'Ambiente tatami com decoração budista' },
   { src: 'espaco5.jpg', alt: 'Tatami com iluminação suave' },
-  { src: 'espaco6.jpg', alt: 'Detalhes do espaço de relaxamento' }
+  { src: 'espaco6.jpg', alt: 'Detalhes do espaço de relaxamento' },
+  { src: 'espaco7.jpg', alt: 'Ambiente tatami com decoração budista' },
+  { src: 'espaco8.jpg', alt: 'Tatami com iluminação suave' },
+  { src: 'espaco9.jpg', alt: 'Detalhes do espaço de relaxamento' }
 ];
 
 const icons = {
@@ -135,6 +138,109 @@ const icons = {
   glow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
 };
 
+// CAROUSEL CORRIGIDO
+let currentSlide = 0;
+let slidesPerView = 1;
+
+function initCarousel() {
+  const track = document.getElementById('carousel-track');
+  const dotsContainer = document.getElementById('carousel-dots');
+  if (!track || !dotsContainer) return;
+
+  // Renderizar todas as imagens
+  track.innerHTML = espacoImages.map(img => `
+    <div class="carousel-slide">
+      <img src="${img.src}" alt="${img.alt}" class="carousel-image" loading="lazy">
+    </div>
+  `).join('');
+
+  updateSlidesPerView();
+  updateDots();
+  updateCarousel();
+
+  // Event listeners
+  document.getElementById('carousel-prev')?.addEventListener('click', prevSlide);
+  document.getElementById('carousel-next')?.addEventListener('click', nextSlide);
+
+  window.addEventListener('resize', () => {
+    updateSlidesPerView();
+    updateCarousel();
+    updateDots();
+  });
+
+  // Touch events para mobile
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  track.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  track.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+  
+  function handleSwipe() {
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextSlide();
+      else prevSlide();
+    }
+  }
+}
+
+function updateSlidesPerView() {
+  if (window.innerWidth >= 1024) {
+    slidesPerView = 3;
+  } else if (window.innerWidth >= 768) {
+    slidesPerView = 2;
+  } else {
+    slidesPerView = 1;
+  }
+}
+
+function updateCarousel() {
+  const track = document.getElementById('carousel-track');
+  if (!track) return;
+
+  const slideWidth = 100 / slidesPerView;
+  track.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
+}
+
+function updateDots() {
+  const dotsContainer = document.getElementById('carousel-dots');
+  if (!dotsContainer) return;
+
+  const totalDots = Math.max(1, espacoImages.length - slidesPerView + 1);
+  dotsContainer.innerHTML = Array.from({ length: totalDots }, (_, i) => `
+    <button class="carousel-dot ${i === currentSlide ? 'active' : ''}" data-index="${i}"></button>
+  `).join('');
+
+  dotsContainer.querySelectorAll('.carousel-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      currentSlide = parseInt(dot.dataset.index);
+      updateCarousel();
+      updateDots();
+    });
+  });
+}
+
+function nextSlide() {
+  const maxSlide = Math.max(0, espacoImages.length - slidesPerView);
+  currentSlide = currentSlide < maxSlide ? currentSlide + 1 : 0;
+  updateCarousel();
+  updateDots();
+}
+
+function prevSlide() {
+  const maxSlide = Math.max(0, espacoImages.length - slidesPerView);
+  currentSlide = currentSlide > 0 ? currentSlide - 1 : maxSlide;
+  updateCarousel();
+  updateDots();
+}
+
+// FUNÇÕES DE SERVIÇOS
 function renderServices() {
   const grid = document.getElementById('services-grid');
   if (!grid) return;
@@ -227,110 +333,7 @@ function closeServiceModal() {
   document.body.style.overflow = '';
 }
 
-let currentSlide = 0;
-let slidesPerView = 1;
-
-function initCarousel() {
-  const track = document.getElementById('carousel-track');
-  const dotsContainer = document.getElementById('carousel-dots');
-  if (!track || !dotsContainer) return;
-
-  track.innerHTML = espacoImages.map(img => `
-    <div class="carousel-slide">
-      <img src="${img.src}" alt="${img.alt}" class="carousel-image" loading="lazy">
-    </div>
-  `).join('');
-
-  updateSlidesPerView();
-  const totalSlides = Math.ceil(espacoImages.length / slidesPerView);
-  
-  dotsContainer.innerHTML = Array.from({ length: totalSlides }, (_, i) => `
-    <button class="carousel-dot ${i === 0 ? 'active' : ''}" data-index="${i}" aria-label="Slide ${i + 1}"></button>
-  `).join('');
-
-  dotsContainer.querySelectorAll('.carousel-dot').forEach(dot => {
-    dot.addEventListener('click', () => {
-      goToSlide(parseInt(dot.dataset.index));
-    });
-  });
-
-  document.getElementById('carousel-prev')?.addEventListener('click', prevSlide);
-  document.getElementById('carousel-next')?.addEventListener('click', nextSlide);
-
-  window.addEventListener('resize', () => {
-    updateSlidesPerView();
-    updateCarousel();
-  });
-
-  let touchStartX = 0;
-  let touchEndX = 0;
-  
-  track.addEventListener('touchstart', e => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-  
-  track.addEventListener('touchend', e => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-  }, { passive: true });
-  
-  function handleSwipe() {
-    const diff = touchStartX - touchEndX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) nextSlide();
-      else prevSlide();
-    }
-  }
-}
-
-function updateSlidesPerView() {
-  if (window.innerWidth >= 1024) {
-    slidesPerView = 3;
-  } else if (window.innerWidth >= 768) {
-    slidesPerView = 2;
-  } else {
-    slidesPerView = 1;
-  }
-}
-
-function updateCarousel() {
-  const track = document.getElementById('carousel-track');
-  const dots = document.querySelectorAll('.carousel-dot');
-  if (!track) return;
-
-  const slideWidth = 100 / slidesPerView;
-  track.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
-
-  dots.forEach((dot, i) => {
-    dot.classList.toggle('active', i === currentSlide);
-  });
-}
-
-function nextSlide() {
-  const totalSlides = Math.ceil(espacoImages.length / slidesPerView);
-  currentSlide = (currentSlide + 1) % totalSlides;
-  updateCarousel();
-}
-
-function prevSlide() {
-  const totalSlides = Math.ceil(espacoImages.length / slidesPerView);
-  currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-  updateCarousel();
-}
-
-function goToSlide(index) {
-  currentSlide = index;
-  updateCarousel();
-}
-
-function populateServiceSelect() {
-  const select = document.getElementById('service');
-  if (!select) return;
-
-  select.innerHTML = '<option value="">Selecione um serviço</option>' +
-    services.map(s => `<option value="${s.id}">${s.name} - ${s.price}</option>`).join('');
-}
-
+// NAVEGAÇÃO
 function initNavigation() {
   const nav = document.getElementById('main-nav');
   const mobileToggle = document.getElementById('mobile-toggle');
@@ -359,6 +362,7 @@ function initNavigation() {
   });
 }
 
+// MODAL
 function initModal() {
   const modal = document.getElementById('service-modal');
   const closeBtn = document.getElementById('modal-close');
@@ -368,17 +372,13 @@ function initModal() {
   closeBtn?.addEventListener('click', closeServiceModal);
   backdrop?.addEventListener('click', closeServiceModal);
   
-  // Modificar este evento para ir para o agendamento
   modalCta?.addEventListener('click', function() {
     const serviceId = this.dataset.serviceId;
     const serviceName = this.dataset.serviceName;
     const servicePrice = this.dataset.servicePrice;
     
     if (serviceId && serviceName && servicePrice) {
-      // Fechar modal
       closeServiceModal();
-      
-      // Ir para a seção de agendamento
       goToBookingSection(serviceId, serviceName, servicePrice);
     }
   });
@@ -390,45 +390,7 @@ function initModal() {
   });
 }
 
-function initContactForm() {
-  const form = document.getElementById('contact-form');
-  if (!form) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-    
-    if (!data.name || !data.email) {
-      showToast('Por favor, preencha todos os campos obrigatórios.', 'error');
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        showToast('Mensagem enviada com sucesso! Entraremos em contato em breve.', 'success');
-        form.reset();
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
-      showToast('Erro ao enviar mensagem. Tente novamente.', 'error');
-    }
-  });
-}
-
+// TOAST NOTIFICATIONS
 function showToast(message, type = 'default') {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -452,6 +414,7 @@ function showToast(message, type = 'default') {
   }, 5000);
 }
 
+// PARTÍCULAS E EFEITOS VISUAIS
 function initParticles() {
   const container = document.getElementById('particles');
   if (!container) return;
@@ -530,6 +493,7 @@ function initLotusPetals() {
   }, 2000);
 }
 
+// SCROLL REVEAL
 function initScrollReveal() {
   const revealElements = document.querySelectorAll('.reveal');
   
@@ -554,6 +518,7 @@ function initScrollReveal() {
   });
 }
 
+// SCROLL SUAVE
 function initSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
@@ -573,9 +538,8 @@ function initSmoothScroll() {
   });
 }
 
-// FUNÇÕES PARA AGENDAMENTO AUTOMÁTICO
+// AGENDAMENTO AUTOMÁTICO
 function goToBookingSection(serviceId, serviceName, servicePrice) {
-  // Scroll suave para a seção de agendamento
   const agendamentoSection = document.getElementById('agendamento');
   if (agendamentoSection) {
     const headerOffset = 80;
@@ -587,7 +551,6 @@ function goToBookingSection(serviceId, serviceName, servicePrice) {
       behavior: 'smooth'
     });
 
-    // Aguardar um pouco para o scroll completar antes de selecionar o serviço
     setTimeout(() => {
       selectServiceInBookingForm(serviceId, serviceName, servicePrice);
     }, 800);
@@ -595,18 +558,15 @@ function goToBookingSection(serviceId, serviceName, servicePrice) {
 }
 
 function selectServiceInBookingForm(serviceId, serviceName, servicePrice) {
-  // Encontrar o card do serviço no formulário de agendamento
   const serviceCards = document.querySelectorAll('.service-selection-card');
   
   let serviceFound = false;
   
   serviceCards.forEach(card => {
     if (card.dataset.service === serviceName) {
-      // Simular clique no card
       card.click();
       serviceFound = true;
       
-      // Ir automaticamente para o próximo passo após selecionar o serviço
       setTimeout(() => {
         const nextButton = document.querySelector('.step-1 .booking-next-btn');
         if (nextButton && !nextButton.disabled) {
@@ -621,9 +581,8 @@ function selectServiceInBookingForm(serviceId, serviceName, servicePrice) {
   }
 }
 
-// FORMULÁRIO DE AGENDAMENTO - CORRIGIDO
+// FORMULÁRIO DE AGENDAMENTO
 function initBookingForm() {
-  // Dados do agendamento
   let bookingData = {
     service: '',
     price: '',
@@ -635,7 +594,6 @@ function initBookingForm() {
     time: ''
   };
 
-  // Elementos DOM
   const steps = document.querySelectorAll('.booking-step');
   const progressSteps = document.querySelectorAll('.progress-step');
   const serviceGrid = document.getElementById('service-selection-grid');
@@ -647,7 +605,6 @@ function initBookingForm() {
   const customerForm = document.getElementById('customer-form');
   const confirmationMessage = document.getElementById('confirmation-message');
 
-  // Funções internas do formulário de agendamento
   function loadServicesToForm() {
     if (!serviceGrid) return;
     
@@ -665,25 +622,18 @@ function initBookingForm() {
       </div>
     `).join('');
 
-    // Adicionar event listeners aos cards de serviço
     document.querySelectorAll('.service-selection-card').forEach(card => {
       card.addEventListener('click', () => {
-        // Remover seleção anterior
         document.querySelectorAll('.service-selection-card').forEach(c => c.classList.remove('selected'));
-        
-        // Selecionar novo card
         card.classList.add('selected');
         
-        // Atualizar dados
         bookingData.service = card.dataset.service;
         bookingData.price = card.dataset.price + '€';
         bookingData.serviceId = card.dataset.serviceId;
         
-        // Ativar botão próximo
         const nextBtn = document.querySelector('.step-1 .booking-next-btn');
         if (nextBtn) nextBtn.disabled = false;
         
-        // Se já tiver data selecionada, recarregar horários com a nova duração
         if (bookingData.date) {
           loadTimeSlotsForDate(bookingData.date);
         }
@@ -694,15 +644,13 @@ function initBookingForm() {
   function generateTimeSlots(busyTimes = []) {
     if (!timeSlotsContainer) return;
     
-    // Horários fixos
     const timeSlots = [
         '10:00', '11:00', '12:00',
         '14:00', '15:00', '16:00',
         '17:00', '18:00', '19:00'
     ];
     
-    // Calcular duração do serviço selecionado
-    let serviceDuration = 60; // padrão 60 minutos
+    let serviceDuration = 60;
     if (bookingData.serviceId) {
         const service = services.find(s => s.id === bookingData.serviceId);
         if (service && service.duration) {
@@ -713,32 +661,21 @@ function initBookingForm() {
         }
     }
     
-    // Calcular horas necessárias baseado na duração
     const hoursNeeded = Math.ceil(serviceDuration / 60);
     
-    console.log('🕒 Gerando horários:', {
-        serviceDuration,
-        hoursNeeded,
-        busyTimes
-    });
-    
-    // Gerar HTML dos horários
     timeSlotsContainer.innerHTML = timeSlots.map(time => {
-        // Verificar se este horário e os próximos estão disponíveis
         let isBusy = false;
         let conflictReason = '';
         
-        // Verificar se o horário atual está ocupado
         if (busyTimes.includes(time)) {
             isBusy = true;
             conflictReason = 'Horário inicial ocupado';
         } else {
-            // Verificar se os próximos horários necessários estão disponíveis
             const [hours, minutes] = time.split(':').map(Number);
             
             for (let i = 1; i < hoursNeeded; i++) {
                 const nextHour = hours + i;
-                if (nextHour > 20) { // Limite máximo 20h
+                if (nextHour > 20) {
                     isBusy = true;
                     conflictReason = 'Fora do horário de funcionamento';
                     break;
@@ -765,19 +702,15 @@ function initBookingForm() {
         `;
     }).join('');
     
-    // Adicionar event listeners apenas aos horários disponíveis
     document.querySelectorAll('.time-slot:not(.busy)').forEach(slot => {
         slot.addEventListener('click', function() {
-            // Remover seleção anterior
             document.querySelectorAll('.time-slot').forEach(s => {
                 s.classList.remove('selected');
             });
             
-            // Selecionar novo horário
             this.classList.add('selected');
             bookingData.time = this.dataset.time;
             
-            // Ativar botão próximo
             const nextBtn = document.querySelector('.step-3 .booking-next-btn');
             if (nextBtn) {
                 nextBtn.disabled = !bookingData.date;
@@ -785,7 +718,6 @@ function initBookingForm() {
         });
     });
     
-    // Adicionar event listeners aos horários ocupados
     document.querySelectorAll('.time-slot.busy').forEach(slot => {
         slot.addEventListener('click', function() {
             const conflictReason = this.getAttribute('title') || 'Horário indisponível';
@@ -794,22 +726,16 @@ function initBookingForm() {
     });
   }
 
-  /**
-   * Carrega horários para uma data específica considerando a duração do serviço
-   */
   async function loadTimeSlotsForDate(selectedDate) {
     if (!timeSlotsContainer) return;
     
-    // Mostrar loading
-    timeSlotsContainer.innerHTML = '<p style="text-align: center; color: var(--secondary-gold);">Verificando disponibilidade...</p>';
+    timeSlotsContainer.innerHTML = '<p style="text-align: center; color: var(--primary);">Verificando disponibilidade...</p>';
 
     try {
-        // Consultar disponibilidade
         const response = await fetch(`/api/availability?date=${selectedDate}`);
         const data = await response.json();
 
         if (data.success) {
-            // Gerar horários considerando a duração
             generateTimeSlots(data.busyTimes || []);
         } else {
             throw new Error(data.error || 'Erro ao consultar disponibilidade');
@@ -817,8 +743,6 @@ function initBookingForm() {
     } catch (error) {
         console.error('Erro ao carregar horários:', error);
         showToast('Erro ao consultar disponibilidade. Gerando horários padrão.', 'error');
-        
-        // Gerar horários padrão em caso de erro
         generateTimeSlots([]);
     }
   }
@@ -828,16 +752,13 @@ function initBookingForm() {
     const currentStepNumber = parseInt(currentStep.className.match(/step-(\d)/)[1]);
     const nextStepNumber = currentStepNumber + 1;
     
-    // Atualizar dados no resumo se for o último passo
     if (nextStepNumber === 4) {
       updateSummary();
     }
     
-    // Mudar passo
     currentStep.classList.remove('active');
     document.querySelector(`.step-${nextStepNumber}`).classList.add('active');
     
-    // Atualizar progresso
     updateProgress(nextStepNumber);
   }
 
@@ -846,11 +767,9 @@ function initBookingForm() {
     const currentStepNumber = parseInt(currentStep.className.match(/step-(\d)/)[1]);
     const prevStepNumber = currentStepNumber - 1;
     
-    // Mudar passo
     currentStep.classList.remove('active');
     document.querySelector(`.step-${prevStepNumber}`).classList.add('active');
     
-    // Atualizar progresso
     updateProgress(prevStepNumber);
   }
 
@@ -864,12 +783,10 @@ function initBookingForm() {
   }
 
   function updateSummary() {
-    // Coletar dados do formulário
     bookingData.name = document.getElementById('customer-name').value;
     bookingData.email = document.getElementById('customer-email').value;
     bookingData.phone = document.getElementById('customer-phone').value;
     
-    // Atualizar resumo
     document.getElementById('summary-service').textContent = bookingData.service;
     document.getElementById('summary-price').textContent = bookingData.price;
     document.getElementById('summary-name').textContent = bookingData.name;
@@ -877,23 +794,6 @@ function initBookingForm() {
     document.getElementById('summary-phone').textContent = bookingData.phone;
     document.getElementById('summary-date').textContent = formatDate(bookingData.date);
     document.getElementById('summary-time').textContent = bookingData.time;
-    
-    // Adicionar informação de duração
-    const service = services.find(s => s.id === bookingData.serviceId);
-    if (service) {
-        const durationElement = document.getElementById('summary-duration') || document.createElement('div');
-        durationElement.id = 'summary-duration';
-        durationElement.innerHTML = `<strong>Duração:</strong> ${service.duration}`;
-        durationElement.style.marginTop = '10px';
-        durationElement.style.padding = '5px';
-        durationElement.style.background = 'rgba(255,215,0,0.1)';
-        durationElement.style.borderRadius = '5px';
-        
-        const summaryContent = document.querySelector('.booking-summary-content');
-        if (summaryContent && !document.getElementById('summary-duration')) {
-            summaryContent.appendChild(durationElement);
-        }
-    }
   }
 
   function formatDate(dateString) {
@@ -903,16 +803,13 @@ function initBookingForm() {
 
   async function confirmBooking() {
     try {
-        // Coletar dados completos
         updateSummary();
         
-        // Mostrar loading
         const confirmBtn = document.querySelector('.booking-confirm-btn');
         const originalText = confirmBtn.textContent;
         confirmBtn.innerHTML = '<span class="loading-spinner"></span>Processando...';
         confirmBtn.disabled = true;
         
-        // Preparar dados no formato correto
         const bookingPayload = {
             services: [{ 
                 name: bookingData.service, 
@@ -928,7 +825,6 @@ function initBookingForm() {
 
         console.log('📤 Enviando agendamento:', bookingPayload);
         
-        // Enviar para API
         const response = await fetch('/api/bookings', {
             method: 'POST',
             headers: {
@@ -940,27 +836,23 @@ function initBookingForm() {
         const result = await response.json();
 
         if (result.success) {
-            // Mostrar mensagem de confirmação
             if (confirmationMessage) {
                 confirmationMessage.classList.add('active');
             }
             
-            // Esconder botões
             const bookingButtons = document.querySelector('.step-4 .booking-buttons');
             if (bookingButtons) {
                 bookingButtons.style.display = 'none';
             }
             
-            // Atualizar status do calendário
             const calendarStatus = document.getElementById('calendar-status');
             if (calendarStatus) {
                 calendarStatus.textContent = result.message || 'Agendamento confirmado com sucesso!';
-                calendarStatus.style.color = 'var(--secondary-gold)';
+                calendarStatus.style.color = 'var(--primary)';
             }
             
             showToast('Agendamento confirmado com sucesso!', 'success');
             
-            // Resetar formulário após 5 segundos
             setTimeout(() => {
                 resetBookingForm();
             }, 5000);
@@ -971,7 +863,6 @@ function initBookingForm() {
         console.error('Erro ao confirmar agendamento:', error);
         showToast(error.message || 'Erro ao confirmar agendamento. Tente novamente.', 'error');
     } finally {
-        // Restaurar botão em caso de erro
         const confirmBtn = document.querySelector('.booking-confirm-btn');
         if (confirmBtn) {
             confirmBtn.textContent = 'Confirmar Agendamento';
@@ -981,31 +872,24 @@ function initBookingForm() {
   }
 
   function resetBookingForm() {
-    // Voltar para o primeiro passo
     document.querySelectorAll('.booking-step').forEach(step => step.classList.remove('active'));
     document.querySelector('.step-1').classList.add('active');
     
-    // Resetar progresso
     document.querySelectorAll('.progress-step').forEach(step => step.classList.remove('active'));
     document.querySelector('[data-step="1"]').classList.add('active');
     
-    // Limpar seleções
     document.querySelectorAll('.service-selection-card').forEach(card => card.classList.remove('selected'));
     document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
     
-    // Limpar formulário
     if (customerForm) customerForm.reset();
     if (bookingDateInput) bookingDateInput.value = '';
     if (timeSlotsContainer) timeSlotsContainer.innerHTML = '';
     
-    // Esconder mensagem de confirmação
     if (confirmationMessage) confirmationMessage.classList.remove('active');
     
-    // Mostrar botões novamente
     const bookingButtons = document.querySelector('.step-4 .booking-buttons');
     if (bookingButtons) bookingButtons.style.display = 'flex';
     
-    // Resetar dados
     bookingData = {
         service: '',
         price: '',
@@ -1019,7 +903,6 @@ function initBookingForm() {
   }
 
   function setupEventListeners() {
-    // Validação do formulário de dados
     customerForm?.addEventListener('input', () => {
       const name = document.getElementById('customer-name').value;
       const email = document.getElementById('customer-email').value;
@@ -1031,7 +914,6 @@ function initBookingForm() {
       }
     });
 
-    // Seleção de data - CONSULTAR DISPONIBILIDADE
     bookingDateInput?.addEventListener('change', async function() {
       const selectedDate = this.value;
       
@@ -1043,71 +925,56 @@ function initBookingForm() {
       }
 
       bookingData.date = selectedDate;
-      
-      // Carregar horários considerando a duração do serviço
       await loadTimeSlotsForDate(selectedDate);
       
-      // Verificar se há horário selecionado
       const nextBtn = document.querySelector('.step-3 .booking-next-btn');
       if (nextBtn) {
         nextBtn.disabled = !bookingData.time;
       }
     });
 
-    // Botões próximo
     nextButtons.forEach(button => {
       button.addEventListener('click', goToNextStep);
     });
 
-    // Botões voltar
     backButtons.forEach(button => {
       button.addEventListener('click', goToPreviousStep);
     });
 
-    // Botão confirmar
     confirmButton?.addEventListener('click', confirmBooking);
   }
 
-  // Inicialização
   function init() {
-    // Configurar data mínima (hoje)
     const today = new Date().toISOString().split('T')[0];
     if (bookingDateInput) bookingDateInput.min = today;
     
-    // Carregar serviços no formulário
     loadServicesToForm();
-    
-    // Gerar horários disponíveis (inicialmente vazios)
     generateTimeSlots();
-    
-    // Configurar event listeners
     setupEventListeners();
   }
 
-  // Inicializar quando DOM estiver pronto
   if (document.getElementById('agendamento')) {
     init();
   }
 }
 
-// Função principal de inicialização
+// INICIALIZAÇÃO PRINCIPAL
 function init() {
   initNavigation();
   renderServices();
   initCarousel();
-  populateServiceSelect();
   initModal();
-  initContactForm();
   initParticles();
   initLotusPetals();
   initScrollReveal();
   initSmoothScroll();
-  initBookingForm(); // Formulário de agendamento
+  initBookingForm();
 
+  // Auto-rotate carousel
   setInterval(() => {
     nextSlide();
   }, 5000);
 }
 
-// Inicializar quando o DOM estiver pronto
+// INICIAR QUANDO O DOM ESTIVER PRONTO
 document.addEventListener('DOMContentLoaded', init);
