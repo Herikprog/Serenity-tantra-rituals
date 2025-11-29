@@ -539,7 +539,7 @@ app.post('/api/bookings', async (req, res) => {
         res.json({ 
             success: true,
             eventId,
-            message: 'Agendamento criado com sucesso! Você receberá uma confirmação por email em breve.' 
+            message: 'Agendamento criado com sucesso!' 
         });
         
     } catch (error) {
@@ -661,4 +661,5 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`   📅 Disponibilidade: http://localhost:${PORT}/api/availability?date=2024-01-15`);
     console.log('');
     console.log('💡 O sistema agora consulta o Google Calendar em tempo real para verificar horários ocupados!');
+
 });
